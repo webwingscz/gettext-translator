@@ -359,10 +359,8 @@ class Gettext extends Nette\Object implements Nette\Localization\ITranslator
 				throw new Nette\InvalidStateException('Language file(s) must be defined.');
 			}
 
-			if ($this->productionMode && isset($this->cache->load('dictionary-' . $this->lang))) {
-				$this->dictionary = $this->cache->load('dictionary-' . $this->lang);
-
-			} else {
+			$this->dictionary = $this->cache->load('dictionary-' . $this->lang);
+			if (!$this->productionMode || $this->dictionary === NULL) {
 				$files = array();
 				foreach ($this->files as $identifier => $dir) {
 					$path = "$dir/$this->lang.$identifier.mo";
