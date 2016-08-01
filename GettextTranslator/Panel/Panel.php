@@ -195,7 +195,11 @@ class Panel extends Nette\Object implements Nette\Diagnostics\IBarPanel
 			return;
 		}
 
-		$tmp = explode(':', $this->application->presenter->name);
+		/* @var $request Nette\Application\Request */
+		$request = $this->application->getRequests()[0];
+		$presenterName = $request->getPresenterName();
+
+		$tmp = explode(':', $presenterName);
 
 		if (count($tmp) >= 2) {
 			$module = strtolower($tmp[0]);
