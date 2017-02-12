@@ -4,12 +4,6 @@ namespace GettextTranslator\DI;
 
 use Nette;
 
-
-if (!class_exists('Nette\DI\CompilerExtension')) {
-	class_alias('Nette\Config\CompilerExtension', 'Nette\DI\CompilerExtension');
-}
-
-
 class Extension extends Nette\DI\CompilerExtension
 {
 	/** @var array */
