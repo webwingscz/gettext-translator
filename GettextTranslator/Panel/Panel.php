@@ -180,19 +180,21 @@ class Panel extends Nette\Object implements \Tracy\IBarPanel {
         }
 
         /* @var $request Nette\Application\Request */
-        $request = $this->application->getRequests()[0];
-        $presenterName = $request->getPresenterName();
+        if (isset($this->application->getRequests()[0])){;
+            $request = $this->application->getRequests()[0];
+            $presenterName = $request->getPresenterName();
 
-        $tmp = explode(':', $presenterName);
+            $tmp = explode(':', $presenterName);
 
-        if (count($tmp) >= 2) {
-            $module = strtolower($tmp[0]);
-            if (isset($files[$module])) {
-                return $module;
+            if (count($tmp) >= 2) {
+                $module = strtolower($tmp[0]);
+                if (isset($files[$module])) {
+                    return $module;
+                }
             }
-        }
 
-        return $files[0];
+            return $files[0];
+        }
     }
 
 }
