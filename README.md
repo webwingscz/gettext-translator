@@ -1,7 +1,7 @@
 Gettext Translator
 ===
 
-Gettext Translator based on Schmutzka gettexttranslator. 
+Gettext Translator based on Schmutzka gettexttranslator.
 
 This tool that enables simple and user friendly translation of your texts via panel in debug bar.
 **Redone for Nette 2.4 and AJAXed Tracy.** *Not tested on any other versions!*
@@ -19,6 +19,7 @@ See (non)actual info and manual: [http://addons2.nette.org/schmutzka/gettexttran
 Authors in alphabetic order
 ---
 
+- Jiří Dorazil (https://webwings.cz)
 - David Jeřábek
 - Josef Kufner (jk@frozen-doe.net)
 - Miroslav Paulík (https://github.com/castamir)
