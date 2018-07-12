@@ -2,10 +2,12 @@
 
 namespace GettextTranslator;
 
-use Nette,
-    Tracy;
+use Nette;
+use Tracy;
 
-class Panel extends Nette\Object implements \Tracy\IBarPanel {
+class Panel implements \Tracy\IBarPanel
+{
+    use Nette\SmartObject;
 
     /** @var string */
     private $xhrHeader = 'X-Translation-Client';
@@ -42,7 +44,8 @@ class Panel extends Nette\Object implements \Tracy\IBarPanel {
      * @param string
      * @param int
      */
-    public function __construct(Nette\Application\Application $application, Gettext $translator, Nette\Http\Session $session, Nette\Http\Request $httpRequest, $layout, $height) {
+    public function __construct(Nette\Application\Application $application, Gettext $translator, Nette\Http\Session $session, Nette\Http\Request $httpRequest, $layout, $height)
+    {
         $this->application = $application;
         $this->translator = $translator;
         $this->sessionStorage = $session->getSection(Gettext::$namespace);
@@ -57,7 +60,8 @@ class Panel extends Nette\Object implements \Tracy\IBarPanel {
      * Return's panel ID
      * @return string
      */
-    public function getId() {
+    public function getId()
+    {
         return __CLASS__;
     }
 
@@ -65,7 +69,8 @@ class Panel extends Nette\Object implements \Tracy\IBarPanel {
      * Returns the code for the panel tab
      * @return string
      */
-    public function getTab() {
+    public function getTab()
+    {
         ob_start();
         require __DIR__ . '/tab.latte';
         return ob_get_clean();
@@ -75,7 +80,8 @@ class Panel extends Nette\Object implements \Tracy\IBarPanel {
      * Returns the code for the panel itself
      * @return string
      */
-    public function getPanel() {
+    public function getPanel()
+    {
         $files = array_keys($this->translator->getFiles());
         $activeFile = $this->getActiveFile($files);
 
@@ -83,14 +89,14 @@ class Panel extends Nette\Object implements \Tracy\IBarPanel {
         $untranslatedStack = isset($this->sessionStorage['stack']) ? $this->sessionStorage['stack'] : array();
         foreach ($strings as $string => $data) {
             if (!$data) {
-                $untranslatedStack[$string] = FALSE;
+                $untranslatedStack[$string] = false;
             }
         }
         $this->sessionStorage['stack'] = $untranslatedStack;
 
         foreach ($untranslatedStack as $string => $value) {
             if (!isset($strings[$string])) {
-                $strings[$string] = FALSE;
+                $strings[$string] = false;
             }
         }
 
@@ -104,7 +110,8 @@ class Panel extends Nette\Object implements \Tracy\IBarPanel {
     /**
      * Handles an incomuing request and saves the data if necessary.
      */
-    private function processRequest() {
+    private function processRequest()
+    {
         if ($this->httpRequest->isMethod('POST') && $this->httpRequest->isAjax() && $this->httpRequest->getHeader($this->xhrHeader)) {
             $data = json_decode(file_get_contents('php://input'));
 
@@ -139,7 +146,8 @@ class Panel extends Nette\Object implements \Tracy\IBarPanel {
      * @param string $count
      * @return string
      */
-    protected function ordinalSuffix($count) {
+    protected function ordinalSuffix($count)
+    {
         switch (substr($count, -1)) {
             case '1':
                 return 'st';
@@ -165,7 +173,8 @@ class Panel extends Nette\Object implements \Tracy\IBarPanel {
      * @param int
      * @param int
      */
-    public static function register(Nette\Application\Application $application, Gettext $translator, Nette\Http\Session $session, Nette\Http\Request $httpRequest, $layout, $height) {
+    public static function register(Nette\Application\Application $application, Gettext $translator, Nette\Http\Session $session, Nette\Http\Request $httpRequest, $layout, $height)
+    {
         \Tracy\Debugger::getBar()->addPanel(new static($application, $translator, $session, $httpRequest, $layout, $height));
     }
 
@@ -174,13 +183,14 @@ class Panel extends Nette\Object implements \Tracy\IBarPanel {
      * @param array
      * @return string
      */
-    protected function getActiveFile($files) {
-        if ($this->application == NULL) {
+    protected function getActiveFile($files)
+    {
+        if ($this->application == null) {
             return;
         }
 
         /* @var $request Nette\Application\Request */
-        if (isset($this->application->getRequests()[0])){;
+        if (isset($this->application->getRequests()[0])) {;
             $request = $this->application->getRequests()[0];
             $presenterName = $request->getPresenterName();
 

@@ -6,8 +6,10 @@ use Nette;
 use Nette\Utils\Strings;
 
 
-class FileManager extends Nette\Object
+class FileManager
 {
+	use Nette\SmartObject;
+
 	/** @var array { [ key => default ] } */
 	private $defaultMetadata = array(
 		'Project-Id-Version' => '',
