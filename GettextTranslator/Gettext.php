@@ -6,6 +6,13 @@ use Nette;
 use Nette\Caching\Cache;
 use Nette\Utils\Strings;
 
+/**
+ * Class Gettext
+ *
+ * @package GettextTranslator
+ * @property string $lang
+ * @property-write bool $productionMode
+ */
 class Gettext implements Nette\Localization\ITranslator
 {
     use Nette\SmartObject;
