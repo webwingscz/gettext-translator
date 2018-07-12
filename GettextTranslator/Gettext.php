@@ -6,7 +6,9 @@ use Nette;
 use Nette\Caching\Cache;
 use Nette\Utils\Strings;
 
-class Gettext extends Nette\Object implements Nette\Localization\ITranslator {
+class Gettext implements Nette\Localization\ITranslator
+{
+    use Nette\SmartObject;
 
     const SKIP_CHAR = '!';
 
@@ -32,7 +34,7 @@ class Gettext extends Nette\Object implements Nette\Localization\ITranslator {
     private $productionMode;
 
     /** @var bool */
-    private $loaded = FALSE;
+    private $loaded = false;
 
     /** @var Nette\Http\SessionSection */
     private $sessionStorage;
@@ -43,16 +45,17 @@ class Gettext extends Nette\Object implements Nette\Localization\ITranslator {
     /** @var Nette\Http\Response */
     private $httpResponse;
 
-    public function __construct(Nette\Http\Session $session, Nette\Caching\IStorage $cacheStorage, Nette\Http\Response $httpResponse, FileManager $fileManager) {
+    public function __construct(Nette\Http\Session $session, Nette\Caching\IStorage $cacheStorage, Nette\Http\Response $httpResponse, FileManager $fileManager)
+    {
         $this->sessionStorage = $sessionStorage = $session->getSection(self::$namespace);
         $this->cache = new Nette\Caching\Cache(new Nette\Caching\Storages\DevNullStorage(), self::$namespace);
         $this->httpResponse = $httpResponse;
         $this->fileManager = $fileManager;
         /*
-          if (!isset($sessionStorage->newStrings) || !is_array($sessionStorage->newStrings)) {
-          $sessionStorage->newStrings = array();
-          }
-         */
+    if (!isset($sessionStorage->newStrings) || !is_array($sessionStorage->newStrings)) {
+    $sessionStorage->newStrings = array();
+    }
+     */
     }
 
     /**
@@ -62,7 +65,8 @@ class Gettext extends Nette\Object implements Nette\Localization\ITranslator {
      * @return $this
      * @throws \InvalidArgumentException
      */
-    public function addFile($dir, $identifier) {
+    public function addFile($dir, $identifier)
+    {
         if (isset($this->files[$identifier])) {
             throw new \InvalidArgumentException("Language file identified '$identifier' is already registered.");
         }
@@ -81,7 +85,8 @@ class Gettext extends Nette\Object implements Nette\Localization\ITranslator {
      * @return string
      * @throws Nette\InvalidStateException
      */
-    public function getLang() {
+    public function getLang()
+    {
         if (empty($this->lang)) {
             throw new Nette\InvalidStateException('Language must be defined.');
         }
@@ -93,7 +98,8 @@ class Gettext extends Nette\Object implements Nette\Localization\ITranslator {
      * Set new language
      * @return this
      */
-    public function setLang($lang) {
+    public function setLang($lang)
+    {
         if (empty($lang)) {
             throw new Nette\InvalidStateException('Language must be nonempty string.');
         }
@@ -104,7 +110,7 @@ class Gettext extends Nette\Object implements Nette\Localization\ITranslator {
 
         $this->lang = $lang;
         $this->dictionary = array();
-        $this->loaded = FALSE;
+        $this->loaded = false;
 
         return $this;
     }
@@ -114,7 +120,8 @@ class Gettext extends Nette\Object implements Nette\Localization\ITranslator {
      * @param bool
      * @return this
      */
-    public function setProductionMode($mode) {
+    public function setProductionMode($mode)
+    {
         $this->productionMode = (bool) $mode;
         return $this;
     }
@@ -125,7 +132,8 @@ class Gettext extends Nette\Object implements Nette\Localization\ITranslator {
      * @param int $form plural form (positive number)
      * @return string
      */
-    public function translate($message, $form = 1) {
+    public function translate($message, $form = 1)
+    {
         if (Strings::startsWith($message, self::SKIP_CHAR)) {
             return substr($message, 1);
         }
@@ -133,8 +141,8 @@ class Gettext extends Nette\Object implements Nette\Localization\ITranslator {
         $this->loadDictonary();
 
         $message = (string) $message;
-        $message_plural = NULL;
-        if (is_array($form) && $form !== NULL) {
+        $message_plural = null;
+        if (is_array($form) && $form !== null) {
             $message_plural = current($form);
             $form = (int) end($form);
         } elseif (is_numeric($form)) {
@@ -147,7 +155,7 @@ class Gettext extends Nette\Object implements Nette\Localization\ITranslator {
             } else {
                 $message_plural = 2;
             }
-        } elseif (!is_int($form) || $form === NULL) {
+        } elseif (!is_int($form) || $form === null) {
             $form = 1;
         }
 
@@ -158,7 +166,7 @@ class Gettext extends Nette\Object implements Nette\Localization\ITranslator {
 
             $message = $this->dictionary[$message]['translation'];
             if (!empty($message)) {
-                $message = (is_array($message) && $message_plural !== NULL && isset($message[$message_plural])) ? $message[$message_plural] : $message;
+                $message = (is_array($message) && $message_plural !== null && isset($message[$message_plural])) ? $message[$message_plural] : $message;
             }
         } else {
             if (!$this->httpResponse->isSent() || $this->sessionStorage) {
@@ -180,7 +188,7 @@ class Gettext extends Nette\Object implements Nette\Localization\ITranslator {
         $args = func_get_args();
         if (count($args) > 1) {
             array_shift($args);
-            if (is_array(current($args)) || current($args) === NULL) {
+            if (is_array(current($args)) || current($args) === null) {
                 array_shift($args);
             }
 
@@ -189,7 +197,7 @@ class Gettext extends Nette\Object implements Nette\Localization\ITranslator {
             }
 
             $message = str_replace(array('%label', '%name', '%value'), array('#label', '#name', '#value'), $message);
-            if (count($args) > 0 && $args != NULL) {
+            if (count($args) > 0 && $args != null) {
                 $message = vsprintf($message, $args);
             }
             $message = str_replace(array('#label', '#name', '#value'), array('%label', '%name', '%value'), $message);
@@ -202,7 +210,8 @@ class Gettext extends Nette\Object implements Nette\Localization\ITranslator {
      * Get count of plural forms
      * @return int
      */
-    public function getVariantsCount() {
+    public function getVariantsCount()
+    {
         $this->loadDictonary();
         $files = array_keys($this->files);
 
@@ -217,7 +226,8 @@ class Gettext extends Nette\Object implements Nette\Localization\ITranslator {
      * Get translations strings
      * @return array
      */
-    public function getStrings($file = NULL) {
+    public function getStrings($file = null)
+    {
         $this->loadDictonary();
 
         $newStrings = array();
@@ -226,7 +236,7 @@ class Gettext extends Nette\Object implements Nette\Localization\ITranslator {
         if (isset($this->sessionStorage->newStrings[$this->lang])) {
             foreach (array_keys($this->sessionStorage->newStrings[$this->lang]) as $original) {
                 if (trim($original) != '') {
-                    $newStrings[$original] = FALSE;
+                    $newStrings[$original] = false;
                 }
             }
         }
@@ -258,7 +268,8 @@ class Gettext extends Nette\Object implements Nette\Localization\ITranslator {
      * Get loaded files
      * @return array
      */
-    public function getFiles() {
+    public function getFiles()
+    {
         $this->loadDictonary();
         return $this->files;
     }
@@ -269,7 +280,8 @@ class Gettext extends Nette\Object implements Nette\Localization\ITranslator {
      * @param string|array $string translation string(s)
      * @param string
      */
-    public function setTranslation($message, $string, $file) {
+    public function setTranslation($message, $string, $file)
+    {
         $this->loadDictonary();
 
         if (isset($this->sessionStorage->newStrings[$this->lang]) && array_key_exists($message, $this->sessionStorage->newStrings[$this->lang])) {
@@ -286,7 +298,8 @@ class Gettext extends Nette\Object implements Nette\Localization\ITranslator {
      * Save dictionary
      * @param string
      */
-    public function save($file) {
+    public function save($file)
+    {
         if (!$this->loaded) {
             throw new Nette\InvalidStateException('Nothing to save, translations are not loaded.');
         }
@@ -310,7 +323,7 @@ class Gettext extends Nette\Object implements Nette\Localization\ITranslator {
 
         if ($this->productionMode) {
             $this->cache->clean(array(
-                Cache::TAGS => 'dictionary-' . $this->lang
+                Cache::TAGS => 'dictionary-' . $this->lang,
             ));
         }
     }
@@ -318,14 +331,15 @@ class Gettext extends Nette\Object implements Nette\Localization\ITranslator {
     /**
      * Load data
      */
-    protected function loadDictonary() {
+    protected function loadDictonary()
+    {
         if (!$this->loaded) {
             if (empty($this->files)) {
                 throw new Nette\InvalidStateException('Language file(s) must be defined.');
             }
 
             $this->dictionary = $this->cache->load('dictionary-' . $this->lang);
-            if (!$this->productionMode || $this->dictionary === NULL) {
+            if (!$this->productionMode || $this->dictionary === null) {
                 $files = array();
                 foreach ($this->files as $identifier => $dir) {
                     $path = "$dir/$this->lang.$identifier.mo";
@@ -339,16 +353,16 @@ class Gettext extends Nette\Object implements Nette\Localization\ITranslator {
                     $this->cache->save('dictionary-' . $this->lang, $this->dictionary, array(
                         Cache::EXPIRE => '+ 1 hour',
                         Cache::FILES => $files,
-                        Cache::TAGS => array('dictionary-' . $this->lang)
+                        Cache::TAGS => array('dictionary-' . $this->lang),
                     ));
                 }
 
-                if ($this->dictionary === NULL){
+                if ($this->dictionary === null) {
                     $this->dictionary = [];
                 }
             }
 
-            $this->loaded = TRUE;
+            $this->loaded = true;
         }
     }
 
@@ -357,23 +371,24 @@ class Gettext extends Nette\Object implements Nette\Localization\ITranslator {
      * @param string $file file path
      * @param string
      */
-    private function parseFile($file, $identifier) {
+    private function parseFile($file, $identifier)
+    {
         $f = @fopen($file, 'rb');
         if (@filesize($file) < 10) {
             throw new \InvalidArgumentException("'$file' is not a gettext file.");
         }
 
-        $endian = FALSE;
+        $endian = false;
         $read = function ($bytes) use ($f, $endian) {
             $data = fread($f, 4 * $bytes);
-            return $endian === FALSE ? unpack('V' . $bytes, $data) : unpack('N' . $bytes, $data);
+            return $endian === false ? unpack('V' . $bytes, $data) : unpack('N' . $bytes, $data);
         };
 
         $input = $read(1);
         if (Strings::lower(substr(dechex($input[1]), -8)) == '950412de') {
-            $endian = FALSE;
+            $endian = false;
         } elseif (Strings::lower(substr(dechex($input[1]), -8)) == 'de120495') {
-            $endian = TRUE;
+            $endian = true;
         } else {
             throw new \InvalidArgumentException("'$file' is not a gettext file.");
         }
