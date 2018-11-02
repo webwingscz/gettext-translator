@@ -1,11 +1,13 @@
 <?php
 
-namespace GettextTranslator;
+namespace Webwings\Gettext\Translator;
 
+use Latte\Loaders\FileLoader;
 use Nette;
-use Tracy;
+use Tracy\Debugger;
+use Tracy\IBarPanel;
 
-class Panel implements \Tracy\IBarPanel
+class Panel implements IBarPanel
 {
     use Nette\SmartObject;
 
@@ -27,7 +29,7 @@ class Panel implements \Tracy\IBarPanel
     /** @var Nette\Application\Application */
     private $application;
 
-    /** @var GettextTranslator\Gettext */
+    /** @var Webwings\Gettext\Translator\Gettext */
     private $translator;
 
     /** @var Nette\Http\SessionSection */
@@ -71,9 +73,12 @@ class Panel implements \Tracy\IBarPanel
      */
     public function getTab()
     {
-        ob_start();
-        require __DIR__ . '/tab.latte';
-        return ob_get_clean();
+        $latte = new \Latte\Engine;
+        $latte->setLoader(new FileLoader);
+
+        $template = new \Nette\Bridges\ApplicationLatte\Template($latte);
+        $template->setFile(__DIR__ . '/tab.latte');
+        return $template;
     }
 
     /**
@@ -83,7 +88,6 @@ class Panel implements \Tracy\IBarPanel
     public function getPanel()
     {
         $files = array_keys($this->translator->getFiles());
-        $activeFile = $this->getActiveFile($files);
 
         $strings = $this->translator->getStrings();
         $untranslatedStack = isset($this->sessionStorage['stack']) ? $this->sessionStorage['stack'] : array();
@@ -100,12 +104,40 @@ class Panel implements \Tracy\IBarPanel
             }
         }
 
-        $translator = $this->translator;
+        $latte = new \Latte\Engine;
+        $latte->setLoader(new FileLoader);
 
-        ob_start();
-        require __DIR__ . '/panel.latte';
-        return ob_get_clean();
+        $template = new \Nette\Bridges\ApplicationLatte\Template($latte);
+        $template->setFile(__DIR__ . '/panel.latte');
+
+        $template->translator = $this->translator;
+        $template->ordinalSuffix = function ($count) {
+            switch (substr($count, -1)) {
+                case '1':
+                    return 'st';
+                    break;
+                case '2':
+                    return 'nd';
+                    break;
+                case '3':
+                    return 'rd';
+                    break;
+                default:
+                    return 'th';
+                    break;
+            }
+        };
+
+        $template->application = $this->application;
+        $template->strings = $strings;
+        $template->height = $this->height;
+        $template->layout = $this->layout;
+        $template->files = $files;
+        $template->xhrHeader = $this->xhrHeader;
+        $template->activeFile = $this->getActiveFile($files);
+        return $template;
     }
+
 
     /**
      * Handles an incomuing request and saves the data if necessary.
@@ -120,7 +152,7 @@ class Panel implements \Tracy\IBarPanel
                     $stack = isset($this->sessionStorage['stack']) ? $this->sessionStorage['stack'] : array();
                 }
 
-                $this->translator->lang = $data->{$this->languageKey};
+                $this->translator->setLang($data->{$this->languageKey});
                 $file = $data->{$this->fileKey};
                 unset($data->{$this->languageKey}, $data->{$this->fileKey});
 
@@ -129,6 +161,7 @@ class Panel implements \Tracy\IBarPanel
                     if ($this->sessionStorage && isset($stack[$string])) {
                         unset($stack[$string]);
                     }
+                    $this->translator->updatePOFile($file,$string,$string,$value);
                 }
                 $this->translator->save($file);
 
@@ -142,40 +175,17 @@ class Panel implements \Tracy\IBarPanel
     }
 
     /**
-     * Return an ordinal number suffix
-     * @param string $count
-     * @return string
-     */
-    protected function ordinalSuffix($count)
-    {
-        switch (substr($count, -1)) {
-            case '1':
-                return 'st';
-                break;
-            case '2':
-                return 'nd';
-                break;
-            case '3':
-                return 'rd';
-                break;
-            default:
-                return 'th';
-                break;
-        }
-    }
-
-    /**
      * Register this panel
      * @param Nette\Application\Application
-     * @param GettextTranslator\Gettext
+     * @param Webwings\Gettext\Translator\Gettext
      * @param Nette\Http\Session
      * @param Nette\Http\Request
-     * @param int
-     * @param int
+     * @param int $layout
+     * @param int $height
      */
     public static function register(Nette\Application\Application $application, Gettext $translator, Nette\Http\Session $session, Nette\Http\Request $httpRequest, $layout, $height)
     {
-        \Tracy\Debugger::getBar()->addPanel(new static($application, $translator, $session, $httpRequest, $layout, $height));
+        Debugger::getBar()->addPanel(new static($application, $translator, $session, $httpRequest, $layout, $height));
     }
 
     /**
@@ -183,26 +193,13 @@ class Panel implements \Tracy\IBarPanel
      * @param array
      * @return string
      */
-    protected function getActiveFile($files)
+    private function getActiveFile($files)
     {
-        if ($this->application == null) {
-            return;
-        }
+        $tmp = explode(':', $this->application->getPresenter()->name);
 
-        /* @var $request Nette\Application\Request */
-        if (isset($this->application->getRequests()[0])) {;
-            $request = $this->application->getRequests()[0];
-            $presenterName = $request->getPresenterName();
-
-            $tmp = explode(':', $presenterName);
-
-            if (count($tmp) >= 2) {
-                $module = strtolower($tmp[0]);
-                if (isset($files[$module])) {
-                    return $module;
-                }
-            }
-
+        if (count($tmp) >= 2 && $module = strtolower($tmp[0])) {
+            return $module;
+        } else {
             return $files[0];
         }
     }
