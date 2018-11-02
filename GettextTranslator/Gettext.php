@@ -4,19 +4,30 @@ namespace Webwings\Gettext\Translator;
 
 use Leafo\ScssPhp\Formatter\Debug;
 use Nette;
+use Nette\InvalidStateException;
 use Nette\Utils\Strings;
 use Sepia\PoParser\Catalog\CatalogArray;
 use Sepia\PoParser\Catalog\Entry;
+use Sepia\PoParser\Catalog\Header;
+use Sepia\PoParser\Parser;
+use Sepia\PoParser\PoCompiler;
 use Sepia\PoParser\SourceHandler\FileSystem;
 use Tracy\Debugger;
 
+/**
+ * Class Gettext
+ *
+ * @package GettextTranslator
+ * @property string $lang
+ * @property-write bool $productionMode
+ */
 class Gettext implements Nette\Localization\ITranslator
 {
     use Nette\SmartObject;
 
     /* @var string */
 
-    public static $namespace = 'GettextTranslator-Gettext';
+    public static $namespace = 'Webwings\Gettext\Translator-Gettext';
 
     /** @var array */
     protected $files = [];
@@ -31,7 +42,7 @@ class Gettext implements Nette\Localization\ITranslator
     private $productionMode;
 
     /** @var bool */
-    private $loaded = FALSE;
+    private $loaded = false;
 
     /** @var Nette\Http\SessionSection */
     private $sessionStorage;
@@ -98,12 +109,12 @@ class Gettext implements Nette\Localization\ITranslator
     /**
      * Get current language
      * @return string
-     * @throws Nette\InvalidStateException
+     * @throws InvalidStateException
      */
     public function getLang()
     {
         if (empty($this->lang)) {
-            throw new Nette\InvalidStateException('Language must be defined.');
+            throw new InvalidStateException('Language must be defined.');
         }
 
         return $this->lang;
@@ -116,7 +127,7 @@ class Gettext implements Nette\Localization\ITranslator
     public function setLang($lang)
     {
         if (empty($lang)) {
-            throw new Nette\InvalidStateException('Language must be nonempty string.');
+            throw new InvalidStateException('Language must be nonempty string.');
         }
 
         if ($this->lang === $lang) {
@@ -148,7 +159,7 @@ class Gettext implements Nette\Localization\ITranslator
     {
         if (!$this->loaded) {
             if (empty($this->files)) {
-                throw new Nette\InvalidStateException('Language file(s) must be defined.');
+                throw new InvalidStateException('Language file(s) must be defined.');
             }
 
             $dictionaryTmp = $this->cache->load('dictionary-' . $this->lang);
@@ -260,8 +271,8 @@ class Gettext implements Nette\Localization\ITranslator
      * @throws \Exception
      */
     private function parsePOFile(string $path,string $identifier){
-        $fileHandler = new \Sepia\PoParser\SourceHandler\FileSystem($path);
-        $poParser = new \Sepia\PoParser\Parser($fileHandler);
+        $fileHandler = new FileSystem($path);
+        $poParser = new Parser($fileHandler);
         $catalog = $poParser->parse();
         foreach ($catalog->getEntries() as $entry) {
             $key = $entry->getMsgId();
@@ -472,7 +483,7 @@ class Gettext implements Nette\Localization\ITranslator
     public function save($file)
     {
         if (!$this->loaded) {
-            throw new Nette\InvalidStateException('Nothing to save, translations are not loaded.');
+            throw new InvalidStateException('Nothing to save, translations are not loaded.');
         }
 
         if (!isset($this->files[$file])) {
@@ -484,12 +495,6 @@ class Gettext implements Nette\Localization\ITranslator
 
         $this->buildMOFile("$path.mo", $file);
 
-
-        /*$this->buildPOFile("$path.po", $file); // save and erase whole session. Not useful
-        if (isset($this->sessionStorage->newStrings[$this->lang])) {
-            unset($this->sessionStorage->newStrings[$this->lang]);
-        }*/
-
         if ($this->productionMode) {
             $this->cache->clean(array(
                 'tags' => 'dictionary-' . $this->lang
@@ -499,10 +504,10 @@ class Gettext implements Nette\Localization\ITranslator
 
     /**
      * Generate gettext metadata array
-     * @param string
+     * @param string $identifier
      * @return array
      */
-    private function generateMetadata($identifier)
+    private function generateMetadata(string $identifier) : array
     {
         $result = [];
         $result[] = 'PO-Revision-Date: ' . date('Y-m-d H:iO');
@@ -533,14 +538,14 @@ class Gettext implements Nette\Localization\ITranslator
         // Parse a po file
         if (!file_exists($path)){
             $catalog = new CatalogArray();
-            $header = new \Sepia\PoParser\Catalog\Header();
+            $header = new Header();
             $header->setHeaders($this->generateMetadata($identifier));
             $catalog->addHeaders($header);
             touch($path);
-            $fileHandler = new \Sepia\PoParser\SourceHandler\FileSystem($path);
+            $fileHandler = new FileSystem($path);
         } else {
-            $fileHandler = new \Sepia\PoParser\SourceHandler\FileSystem($path);
-            $poParser = new \Sepia\PoParser\Parser($fileHandler);
+            $fileHandler = new FileSystem($path);
+            $poParser = new Parser($fileHandler);
             $catalog = $poParser->parse();
         }
 
@@ -572,16 +577,15 @@ class Gettext implements Nette\Localization\ITranslator
 
         $catalog->addEntry($entry);
 
-        $compiler = new \Sepia\PoParser\PoCompiler();
+        $compiler = new PoCompiler();
         $fileHandler->save($compiler->compile($catalog));
     }
 
 
-
     /**
      * Build gettext PO file
-     * @param string $file path...
-     * @param string
+     * @param string $path
+     * @param string $identifier
      */
     private function buildPOFile(string $path,string $identifier)
     {
@@ -590,16 +594,15 @@ class Gettext implements Nette\Localization\ITranslator
             $catalog = new CatalogArray();
             $catalog->addHeaders($this->generateMetadata($identifier));
             touch($path);
-            $fileHandler = new \Sepia\PoParser\SourceHandler\FileSystem($path); //?
+            $fileHandler = new FileSystem($path); //?
         } else {
-            $fileHandler = new \Sepia\PoParser\SourceHandler\FileSystem($path);
-            $poParser = new \Sepia\PoParser\Parser($fileHandler);
+            $fileHandler = new FileSystem($path);
+            $poParser = new Parser($fileHandler);
             $catalog = $poParser->parse();
         }
 
         foreach ($this->dictionary as $message => $data) {
             if ($data['file'] !== $identifier) {
-                // touch file? nope, neni pozadavek
                 continue;
             }
             // Update entry
@@ -630,7 +633,7 @@ class Gettext implements Nette\Localization\ITranslator
                 }
             }
         }
-        $compiler = new \Sepia\PoParser\PoCompiler();
+        $compiler = new PoCompiler();
         $fileHandler->save($compiler->compile($catalog));
     }
 

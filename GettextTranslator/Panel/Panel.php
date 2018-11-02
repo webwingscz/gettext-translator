@@ -4,6 +4,9 @@ namespace Webwings\Gettext\Translator;
 
 use Latte\Loaders\FileLoader;
 use Nette;
+use Nette\Application\Application;
+use Nette\Http\Request;
+use Nette\Http\Session;
 use Tracy\Debugger;
 use Tracy\IBarPanel;
 
@@ -26,7 +29,7 @@ class Panel implements IBarPanel
     /** @var int */
     private $height;
 
-    /** @var Nette\Application\Application */
+    /** @var Application */
     private $application;
 
     /** @var Webwings\Gettext\Translator\Gettext */
@@ -35,18 +38,18 @@ class Panel implements IBarPanel
     /** @var Nette\Http\SessionSection */
     private $sessionStorage;
 
-    /** @var Nette\Http\Request */
+    /** @var Request */
     private $httpRequest;
 
     /**
-     * @param Nette\Application\Application
+     * @param Application
      * @param Gettext\Translator\Gettext
-     * @param Nette\Http\Session
-     * @param Nette\Http\Request
+     * @param Session
+     * @param Request
      * @param string
      * @param int
      */
-    public function __construct(Nette\Application\Application $application, Gettext $translator, Nette\Http\Session $session, Nette\Http\Request $httpRequest, $layout, $height)
+    public function __construct(Application $application, Gettext $translator, Session $session, Request $httpRequest, $layout, $height)
     {
         $this->application = $application;
         $this->translator = $translator;
@@ -176,14 +179,14 @@ class Panel implements IBarPanel
 
     /**
      * Register this panel
-     * @param Nette\Application\Application
+     * @param Application
      * @param Webwings\Gettext\Translator\Gettext
-     * @param Nette\Http\Session
-     * @param Nette\Http\Request
+     * @param Session
+     * @param Request
      * @param int $layout
      * @param int $height
      */
-    public static function register(Nette\Application\Application $application, Gettext $translator, Nette\Http\Session $session, Nette\Http\Request $httpRequest, $layout, $height)
+    public static function register(Application $application, Gettext $translator, Session $session, Request $httpRequest, $layout, $height)
     {
         Debugger::getBar()->addPanel(new static($application, $translator, $session, $httpRequest, $layout, $height));
     }
