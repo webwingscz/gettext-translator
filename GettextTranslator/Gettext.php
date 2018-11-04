@@ -32,6 +32,9 @@ class Gettext implements Nette\Localization\ITranslator
     /** @var array */
     protected $files = [];
 
+    /** @var */
+    protected $scanToFile = null;
+
     /** @var string */
     protected $lang;
 
@@ -73,6 +76,8 @@ class Gettext implements Nette\Localization\ITranslator
         'X-Poedit-KeywordsList' => NULL
     );
 
+    const SCAN_FILE_SECTION =  'scan';
+
     public function __construct(Nette\Http\Session $session, Nette\Caching\IStorage $cacheStorage, Nette\Http\Response $httpResponse, $instanceTag = null)
     {
         $this->sessionStorage = $sessionStorage = $session->getSection(self::$namespace . ($instanceTag ? ('-' . $instanceTag) : ''));
@@ -103,6 +108,21 @@ class Gettext implements Nette\Localization\ITranslator
             throw new \InvalidArgumentException("Directory '$dir' doesn't exist.");
         }
 
+        return $this;
+    }
+
+    /**
+     * @param $dir
+     * @return $this
+     */
+    public function setScanToFile($dir)
+    {
+        if (is_dir($dir)) {
+            $this->scanToFile = $dir;
+        } else {
+            throw new \InvalidArgumentException("Directory '$dir' doesn't exist.");
+        }
+        $this->addFile($dir,self::SCAN_FILE_SECTION);
         return $this;
     }
 
@@ -356,6 +376,12 @@ class Gettext implements Nette\Localization\ITranslator
                     $meta = sprintf('%s:%s', $call['file'], $call['line']);
                     $this->sessionStorage->newStrings['meta'][$message][$meta] = $meta;
                 }
+
+                if ($this->scanToFile !== null){
+                    $this->updatePOFile(self::SCAN_FILE_SECTION,$message,$message,'');
+                }
+
+
             }
 
             if ($count > 1 && !empty($message_plural)) {

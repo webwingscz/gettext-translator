@@ -15,7 +15,8 @@ class Extension extends CompilerExtension
         'lang' => 'en',
         'files' => array(),
         'layout' => 'horizontal',
-        'height' => 450
+        'height' => 450,
+        'scanToFile'=>null,
     );
 
     public function loadConfiguration()
@@ -30,6 +31,7 @@ class Extension extends CompilerExtension
         {
             $translator->addSetup('addFile', array($file, $id));
         }
+        $translator->addSetup('setScanToFile', array($config['scanToFile']));
         $translator->addSetup('Webwings\Gettext\Translator\Panel::register', array('@application', '@self', '@session', '@httpRequest', $config['layout'], $config['height']));
     }
 }
