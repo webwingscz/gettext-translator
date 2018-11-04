@@ -119,10 +119,10 @@ class Gettext implements Nette\Localization\ITranslator
     {
         if (is_dir($dir)) {
             $this->scanToFile = $dir;
+            $this->addFile($dir,self::SCAN_FILE_SECTION);
         } else {
-            throw new \InvalidArgumentException("Directory '$dir' doesn't exist.");
+            $this->scanToFile = null;
         }
-        $this->addFile($dir,self::SCAN_FILE_SECTION);
         return $this;
     }
 

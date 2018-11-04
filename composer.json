@@ -28,6 +28,6 @@
     "require": {
         "php": ">=7.1.0",
         "tracy/tracy": "^2.4",
-        "sepia/po-parser": "5.*"
+        "sepia/po-parser": "5.1.5"
     }
 }
