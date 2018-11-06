@@ -202,6 +202,9 @@ class Gettext implements Nette\Localization\ITranslator
                     ));
                 } else {
                     foreach ($this->files AS $identifier => $dir) {
+                        if ($identifier == self::SCAN_FILE_SECTION){
+                            continue;
+                        }
                         $path = "$dir/$this->lang.$identifier.po";
                         if (file_exists($path)) {
                             $this->parsePOFile($path, $identifier);
@@ -299,7 +302,7 @@ class Gettext implements Nette\Localization\ITranslator
             if($key === ""){
                 continue;
             }
-            if ($entry->getMsgStr() === null && $entry->getMsgStrPlurals() === null){
+            if (($entry->getMsgStr() === null && $entry->getMsgStrPlurals() === null) || $entry->getMsgStr() == ''){
                 continue;
             }
             $this->dictionary[$key]['original'] = $entry->getMsgId();
@@ -560,7 +563,11 @@ class Gettext implements Nette\Localization\ITranslator
     public function updatePOFile(string $file,string $identifier,string $message,$translation)
     {
         $dir = $this->files[$file];
-        $path = "$dir/$this->lang.$file". ".po";
+        if ($file === self::SCAN_FILE_SECTION){
+            $path = "$dir/$file". ".po";
+        } else {
+            $path = "$dir/$this->lang.$file". ".po";
+        }
         // Parse a po file
         if (!file_exists($path)){
             $catalog = new CatalogArray();
