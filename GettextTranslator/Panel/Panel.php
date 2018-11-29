@@ -138,6 +138,7 @@ class Panel implements IBarPanel
         $template->files = $files;
         $template->xhrHeader = $this->xhrHeader;
         $template->activeFile = $this->getActiveFile($files);
+        $this->translator->saveCatalog(Gettext::SCAN_FILE_SECTION);
         return $template;
     }
 

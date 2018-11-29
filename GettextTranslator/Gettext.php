@@ -32,7 +32,7 @@ class Gettext implements Nette\Localization\ITranslator
     /** @var array */
     protected $files = [];
 
-    /** @var */
+    /** @var null  */
     protected $scanToFile = null;
 
     /** @var string */
@@ -58,6 +58,9 @@ class Gettext implements Nette\Localization\ITranslator
 
     /** @var array */
     private $metadata;
+
+    /** @var array */
+    private $catalogCache = [];
 
     /** @var array { [ key => default ] } */
     private $metadataList = array(
@@ -87,6 +90,10 @@ class Gettext implements Nette\Localization\ITranslator
         if (!isset($sessionStorage->newStrings) || !is_array($sessionStorage->newStrings)) {
             $sessionStorage->newStrings = [];
         }
+    }
+
+    public function __destruct() {
+        bardump('konec');
     }
 
     /**
@@ -333,8 +340,9 @@ class Gettext implements Nette\Localization\ITranslator
      * @param string $message
      * @param int $form plural form (positive number)
      * @return string
+     * @throws \Exception
      */
-    public function translate($message, $form = 1)
+    public function translate($message, $form = null)
     {
         $this->loadDictonary();
         $files = array_keys($this->files);
@@ -562,24 +570,29 @@ class Gettext implements Nette\Localization\ITranslator
      */
     public function updatePOFile(string $file,string $identifier,string $message,$translation)
     {
-        $dir = $this->files[$file];
-        if ($file === self::SCAN_FILE_SECTION){
-            $path = "$dir/$file". ".po";
+        if (isset($this->catalogCache[$file])){
+            $catalog = $this->catalogCache[$file];
         } else {
-            $path = "$dir/$this->lang.$file". ".po";
-        }
-        // Parse a po file
-        if (!file_exists($path)){
-            $catalog = new CatalogArray();
-            $header = new Header();
-            $header->setHeaders($this->generateMetadata($identifier));
-            $catalog->addHeaders($header);
-            touch($path);
-            $fileHandler = new FileSystem($path);
-        } else {
-            $fileHandler = new FileSystem($path);
-            $poParser = new Parser($fileHandler);
-            $catalog = $poParser->parse();
+
+            $dir = $this->files[$file];
+            if ($file === self::SCAN_FILE_SECTION) {
+                $path = "$dir/$file" . ".po";
+            } else {
+                $path = "$dir/$this->lang.$file" . ".po";
+            }
+            // Parse a po file
+            if (!file_exists($path)) {
+                $catalog = new CatalogArray();
+                $header = new Header();
+                $header->setHeaders($this->generateMetadata($identifier));
+                $catalog->addHeaders($header);
+                touch($path);
+                $fileHandler = new FileSystem($path);
+            } else {
+                $fileHandler = new FileSystem($path);
+                $poParser = new Parser($fileHandler);
+                $catalog = $poParser->parse();
+            }
         }
 
         // Update entry
@@ -609,11 +622,30 @@ class Gettext implements Nette\Localization\ITranslator
         }
 
         $catalog->addEntry($entry);
+        $this->catalogCache[$file] = $catalog;
 
-        $compiler = new PoCompiler();
-        $fileHandler->save($compiler->compile($catalog));
     }
 
+    public function getCatalog($file){
+        return $this->catalogCache[$file];
+    }
+
+    public function saveCatalog($file){
+        if(isset($this->catalogCache[$file])){
+
+            $dir = $this->files[$file];
+            if ($file === self::SCAN_FILE_SECTION) {
+                $path = "$dir/$file" . ".po";
+            } else {
+                $path = "$dir/$this->lang.$file" . ".po";
+            }
+
+            $fileHandler = new FileSystem($path);
+            $catalog = $this->catalogCache[$file];
+            $compiler = new PoCompiler();
+            $fileHandler->save($compiler->compile($catalog));
+        }
+    }
 
     /**
      * Build gettext PO file
