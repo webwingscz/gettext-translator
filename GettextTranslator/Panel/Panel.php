@@ -93,7 +93,7 @@ class Panel implements IBarPanel
         $files = array_keys($this->translator->getFiles());
 
         $strings = $this->translator->getStrings();
-        $untranslatedStack = isset($this->sessionStorage['stack']) ? $this->sessionStorage['stack'] : array();
+        $untranslatedStack = isset($this->sessionStorage['stack']) ? $this->sessionStorage['stack'] : [];
         foreach ($strings as $string => $data) {
             if (!$data) {
                 $untranslatedStack[$string] = false;
@@ -153,7 +153,7 @@ class Panel implements IBarPanel
 
             if ($data) {
                 if ($this->sessionStorage) {
-                    $stack = isset($this->sessionStorage['stack']) ? $this->sessionStorage['stack'] : array();
+                    $stack = isset($this->sessionStorage['stack']) ? $this->sessionStorage['stack'] : [];
                 }
 
                 $this->translator->setLang($data->{$this->languageKey});
@@ -165,7 +165,7 @@ class Panel implements IBarPanel
                     if ($this->sessionStorage && isset($stack[$string])) {
                         unset($stack[$string]);
                     }
-                    $this->translator->updatePOFile($file,$string,$string,$value);
+                    $this->translator->updatePOFile($file, $string, $string, $value);
                 }
                 $this->translator->save($file);
 

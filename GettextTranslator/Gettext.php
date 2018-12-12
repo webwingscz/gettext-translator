@@ -2,7 +2,6 @@
 
 namespace Webwings\Gettext\Translator;
 
-use Leafo\ScssPhp\Formatter\Debug;
 use Nette;
 use Nette\InvalidStateException;
 use Nette\Utils\Strings;
@@ -32,7 +31,7 @@ class Gettext implements Nette\Localization\ITranslator
     /** @var array */
     protected $files = [];
 
-    /** @var null  */
+    /** @var null */
     protected $scanToFile = null;
 
     /** @var string */
@@ -63,9 +62,9 @@ class Gettext implements Nette\Localization\ITranslator
     private $catalogCache = [];
 
     /** @var array { [ key => default ] } */
-    private $metadataList = array(
+    private $metadataList = [
         'Project-Id-Version' => '',
-        'Report-Msgid-Bugs-To' => NULL,
+        'Report-Msgid-Bugs-To' => null,
         'POT-Creation-Date' => '',
         'Last-Translator' => '',
         'Language-Team' => '',
@@ -73,13 +72,13 @@ class Gettext implements Nette\Localization\ITranslator
         'Content-Type' => 'text/plain; charset=UTF-8',
         'Content-Transfer-Encoding' => '8bit',
         'Plural-Forms' => 'nplurals=3; plural=((n==1) ? 0 : (n>=2 && n<=4 ? 1 : 2));',
-        'X-Poedit-Language' => NULL,
-        'X-Poedit-Country' => NULL,
-        'X-Poedit-SourceCharset' => NULL,
-        'X-Poedit-KeywordsList' => NULL
-    );
+        'X-Poedit-Language' => null,
+        'X-Poedit-Country' => null,
+        'X-Poedit-SourceCharset' => null,
+        'X-Poedit-KeywordsList' => null,
+    ];
 
-    const SCAN_FILE_SECTION =  'scan';
+    const SCAN_FILE_SECTION = 'scan';
 
     public function __construct(Nette\Http\Session $session, Nette\Caching\IStorage $cacheStorage, Nette\Http\Response $httpResponse, $instanceTag = null)
     {
@@ -90,10 +89,6 @@ class Gettext implements Nette\Localization\ITranslator
         if (!isset($sessionStorage->newStrings) || !is_array($sessionStorage->newStrings)) {
             $sessionStorage->newStrings = [];
         }
-    }
-
-    public function __destruct() {
-        bardump('konec');
     }
 
     /**
@@ -126,7 +121,7 @@ class Gettext implements Nette\Localization\ITranslator
     {
         if (is_dir($dir)) {
             $this->scanToFile = $dir;
-            $this->addFile($dir,self::SCAN_FILE_SECTION);
+            $this->addFile($dir, self::SCAN_FILE_SECTION);
         } else {
             $this->scanToFile = null;
         }
@@ -175,7 +170,7 @@ class Gettext implements Nette\Localization\ITranslator
      */
     public function setProductionMode($mode)
     {
-        $this->productionMode = (bool)$mode;
+        $this->productionMode = (bool) $mode;
         return $this;
     }
 
@@ -202,14 +197,15 @@ class Gettext implements Nette\Localization\ITranslator
                             $files[] = $path;
                         }
                     }
-                    $this->cache->save('dictionary-' . $this->lang, $this->dictionary, array(
+
+                    $this->cache->save('dictionary-' . $this->lang, $this->dictionary, [
                         'expire' => time() * 60 * 60 * 2,
                         'files' => $files,
-                        'tags' => array('dictionary-' . $this->lang)
-                    ));
+                        'tags' => ['dictionary-' . $this->lang],
+                    ]);
                 } else {
                     foreach ($this->files AS $identifier => $dir) {
-                        if ($identifier == self::SCAN_FILE_SECTION){
+                        if ($identifier == self::SCAN_FILE_SECTION) {
                             continue;
                         }
                         $path = "$dir/$this->lang.$identifier.po";
@@ -220,7 +216,7 @@ class Gettext implements Nette\Localization\ITranslator
                     }
                 }
             }
-            $this->loaded = TRUE;
+            $this->loaded = true;
         }
     }
 
@@ -236,17 +232,17 @@ class Gettext implements Nette\Localization\ITranslator
             throw new \InvalidArgumentException("'$file' is not a gettext file.");
         }
 
-        $endian = FALSE;
+        $endian = false;
         $read = function ($bytes) use ($f, $endian) {
             $data = fread($f, 4 * $bytes);
-            return $endian === FALSE ? unpack('V' . $bytes, $data) : unpack('N' . $bytes, $data);
+            return $endian === false ? unpack('V' . $bytes, $data) : unpack('N' . $bytes, $data);
         };
 
         $input = $read(1);
         if (Strings::lower(substr(dechex($input[1]), -8)) == '950412de') {
-            $endian = FALSE;
+            $endian = false;
         } elseif (Strings::lower(substr(dechex($input[1]), -8)) == 'de120495') {
-            $endian = TRUE;
+            $endian = true;
         } else {
             throw new \InvalidArgumentException("'$file' is not a gettext file.");
         }
@@ -300,16 +296,17 @@ class Gettext implements Nette\Localization\ITranslator
      * @param string $identifier
      * @throws \Exception
      */
-    private function parsePOFile(string $path,string $identifier){
+    private function parsePOFile(string $path, string $identifier)
+    {
         $fileHandler = new FileSystem($path);
         $poParser = new Parser($fileHandler);
         $catalog = $poParser->parse();
         foreach ($catalog->getEntries() as $entry) {
             $key = $entry->getMsgId();
-            if($key === ""){
+            if ($key === "") {
                 continue;
             }
-            if (($entry->getMsgStr() === null && $entry->getMsgStrPlurals() === null) || $entry->getMsgStr() == ''){
+            if (($entry->getMsgStr() === null && $entry->getMsgStrPlurals() === null) || $entry->getMsgStr() == '') {
                 continue;
             }
             $this->dictionary[$key]['original'] = $entry->getMsgId();
@@ -347,14 +344,14 @@ class Gettext implements Nette\Localization\ITranslator
         $this->loadDictonary();
         $files = array_keys($this->files);
 
-        $message = (string)$message;
-        $message_plural = NULL;
+        $message = (string) $message;
+        $message_plural = null;
         if (is_array($form)) {
             $message_plural = current($form);
-            $count = (int)end($form);
+            $count = (int) end($form);
         } elseif (is_numeric($form)) {
-            $count = (int)$form;
-        } elseif (!is_int($form) || $form === NULL) {
+            $count = (int) $form;
+        } elseif (!is_int($form) || $form === null) {
             $count = 1;
         }
 
@@ -372,7 +369,7 @@ class Gettext implements Nette\Localization\ITranslator
                 $message = (is_array($message) && $message_plural !== null && isset($message[$message_plural])) ? $message[$message_plural] : $message;
             }
 
-        } elseif(!$this->productionMode) {
+        } elseif (!$this->productionMode) {
             if (!$this->httpResponse->isSent() || $this->sessionStorage) {
                 if (!isset($this->sessionStorage->newStrings[$this->lang])) {
                     $this->sessionStorage->newStrings[$this->lang] = [];
@@ -381,15 +378,15 @@ class Gettext implements Nette\Localization\ITranslator
                     $this->sessionStorage->newStrings['meta'] = [];
                 }
 
-                $this->sessionStorage->newStrings[$this->lang][$message] = empty($message_plural) ? array($message) : array($message, $message_plural);
-                $call = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS,2)[1];
-                if(isset($call['file']) && isset($call['line'])) {
+                $this->sessionStorage->newStrings[$this->lang][$message] = empty($message_plural) ? [$message] : [$message, $message_plural];
+                $call = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)[1];
+                if (isset($call['file']) && isset($call['line'])) {
                     $meta = sprintf('%s:%s', $call['file'], $call['line']);
                     $this->sessionStorage->newStrings['meta'][$message][$meta] = $meta;
                 }
 
-                if ($this->scanToFile !== null){
-                    $this->updatePOFile(self::SCAN_FILE_SECTION,$message,$message,'');
+                if ($this->scanToFile !== null) {
+                    $this->updatePOFile(self::SCAN_FILE_SECTION, $message, $message, '');
                 }
 
 
@@ -415,11 +412,11 @@ class Gettext implements Nette\Localization\ITranslator
                 $args = current($args);
             }
 
-            $message = str_replace(array('%label', '%name', '%value'), array('#label', '#name', '#value'), $message);
+            $message = str_replace(['%label', '%name', '%value'], ['#label', '#name', '#value'], $message);
             if (count($args) > 0 && $args != null) {
                 $message = vsprintf($message, $args);
             }
-            $message = str_replace(array('#label', '#name', '#value'), array('%label', '%name', '%value'), $message);
+            $message = str_replace(['#label', '#name', '#value'], ['%label', '%name', '%value'], $message);
         }
 
         return $message;
@@ -438,11 +435,12 @@ class Gettext implements Nette\Localization\ITranslator
             $pluralForms = $this->metadata[$files[0]]['Plural-Forms'];
         }
 
-        return (int)substr($pluralForms, 9, 1);
+        return (int) substr($pluralForms, 9, 1);
     }
 
     /**
      * Get translations strings
+     * @param mixed|null $file
      * @return array
      */
     public function getStrings($file = null)
@@ -479,7 +477,7 @@ class Gettext implements Nette\Localization\ITranslator
                 }
             }
 
-            return array('newStrings' => $newStrings) + $result;
+            return ['newStrings' => $newStrings] + $result;
         }
     }
 
@@ -519,6 +517,7 @@ class Gettext implements Nette\Localization\ITranslator
      */
     public function save($file)
     {
+
         if (!$this->loaded) {
             throw new InvalidStateException('Nothing to save, translations are not loaded.');
         }
@@ -530,12 +529,16 @@ class Gettext implements Nette\Localization\ITranslator
         $dir = $this->files[$file];
         $path = "$dir/$this->lang.$file";
 
+        $this->buildPOFile("$path.po", $file, false); // Add the new translation to the PO file
         $this->buildMOFile("$path.mo", $file);
 
+        // Remove cache, so the translation appears in production mode too
+        $this->cache->remove("dictionary-{$this->lang}");
+
         if ($this->productionMode) {
-            $this->cache->clean(array(
-                'tags' => 'dictionary-' . $this->lang
-            ));
+            $this->cache->clean([
+                'tags' => 'dictionary-' . $this->lang,
+            ]);
         }
     }
 
@@ -544,7 +547,7 @@ class Gettext implements Nette\Localization\ITranslator
      * @param string $identifier
      * @return array
      */
-    private function generateMetadata(string $identifier) : array
+    private function generateMetadata(string $identifier): array
     {
         $result = [];
         $result[] = 'PO-Revision-Date: ' . date('Y-m-d H:iO');
@@ -568,9 +571,9 @@ class Gettext implements Nette\Localization\ITranslator
      * @param $translation
      * @throws \Exception
      */
-    public function updatePOFile(string $file,string $identifier,string $message,$translation)
+    public function updatePOFile(string $file, string $identifier, string $message, $translation)
     {
-        if (isset($this->catalogCache[$file])){
+        if (isset($this->catalogCache[$file])) {
             $catalog = $this->catalogCache[$file];
         } else {
 
@@ -599,7 +602,7 @@ class Gettext implements Nette\Localization\ITranslator
         $entry = $catalog->getEntry($message);
         if ($entry === null) {
             $entry = new Entry($message);
-            if (isset($this->sessionStorage->newStrings['meta'][$message]) && is_array($this->sessionStorage->newStrings['meta'][$message])){
+            if (isset($this->sessionStorage->newStrings['meta'][$message]) && is_array($this->sessionStorage->newStrings['meta'][$message])) {
                 $meta = $this->sessionStorage->newStrings['meta'][$message];
                 unset($this->sessionStorage->newStrings['meta'][$message]);
             }
@@ -614,7 +617,7 @@ class Gettext implements Nette\Localization\ITranslator
         } else {
             $entry->setMsgStrPlurals($translation);
         }
-        if(isset($this->sessionStorage->newStrings['meta'][$message])){
+        if (isset($this->sessionStorage->newStrings['meta'][$message])) {
             if (is_array($this->sessionStorage->newStrings['meta'][$message])) {
                 $entry->setReference($this->sessionStorage->newStrings['meta'][$message]);
             }
@@ -626,12 +629,14 @@ class Gettext implements Nette\Localization\ITranslator
 
     }
 
-    public function getCatalog($file){
+    public function getCatalog($file)
+    {
         return $this->catalogCache[$file];
     }
 
-    public function saveCatalog($file){
-        if(isset($this->catalogCache[$file])){
+    public function saveCatalog($file)
+    {
+        if (isset($this->catalogCache[$file])) {
 
             $dir = $this->files[$file];
             if ($file === self::SCAN_FILE_SECTION) {
@@ -651,11 +656,12 @@ class Gettext implements Nette\Localization\ITranslator
      * Build gettext PO file
      * @param string $path
      * @param string $identifier
+     * @param bool $createEmpty Should msgId with no translation be created?
      */
-    private function buildPOFile(string $path,string $identifier)
+    private function buildPOFile(string $path, string $identifier, bool $createEmpty = true)
     {
 
-        if (!file_exists($path)){
+        if (!file_exists($path)) {
             $catalog = new CatalogArray();
             $catalog->addHeaders($this->generateMetadata($identifier));
             touch($path);
@@ -691,8 +697,8 @@ class Gettext implements Nette\Localization\ITranslator
         if (isset($this->sessionStorage->newStrings[$this->lang])) {
             foreach ($this->sessionStorage->newStrings[$this->lang] as $message) {
                 $entry = $catalog->getEntry(current($message));
-                if ($entry === null) {
-                    $entry = new Entry(current($message));
+                if ($entry === null && $createEmpty) {
+                    $entry = new Entry(current($message), "");
                     $entry->setReference(['Added from Tracy bar']);
                     $catalog->addEntry($entry);
                 }
@@ -720,8 +726,8 @@ class Gettext implements Nette\Localization\ITranslator
         $items = count($dictionary) + 1;
         $ids = Strings::chr(0x00);
         $strings = $metadata . Strings::chr(0x00);
-        $idsOffsets = array(0, 28 + $items * 16);
-        $stringsOffsets = array(array(0, strlen($metadata)));
+        $idsOffsets = [0, 28 + $items * 16];
+        $stringsOffsets = [[0, strlen($metadata)]];
 
         foreach ($dictionary AS $key => $value) {
             $id = $key;
@@ -732,7 +738,7 @@ class Gettext implements Nette\Localization\ITranslator
             $string = implode(Strings::chr(0x00), $value['translation']);
             $idsOffsets[] = strlen($id);
             $idsOffsets[] = strlen($ids) + 28 + $items * 16;
-            $stringsOffsets[] = array(strlen($strings), strlen($string));
+            $stringsOffsets[] = [strlen($strings), strlen($string)];
             $ids .= $id . Strings::chr(0x00);
             $strings .= $string . Strings::chr(0x00);
         }
