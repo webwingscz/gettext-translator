@@ -414,7 +414,9 @@ class Gettext implements Nette\Localization\ITranslator
 
             $message = str_replace(['%label', '%name', '%value'], ['#label', '#name', '#value'], $message);
             if (count($args) > 0 && $args != null) {
-                $message = vsprintf($message, $args);
+//                $message = vsprintf($message, $args);
+                $message = str_replace('%form', $form, $message);
+
             }
             $message = str_replace(['#label', '#name', '#value'], ['%label', '%name', '%value'], $message);
         }
