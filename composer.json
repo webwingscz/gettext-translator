@@ -1,5 +1,5 @@
 {
-    "name": "webwings/gettext/translator",
+    "name": "webwings/gettext-translator",
     "description": "Translator for Nette 2.4 (PHP framework).",
     "keywords": ["nette", "translator", "gettext"],
     "homepage": "https://github.com/webwingscz/gettext-translator",
